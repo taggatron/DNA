@@ -1,44 +1,93 @@
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useId } from 'react';
 import './App.css';
 
 
-// SVG puzzle shapes for each base
+// SVG puzzle shapes for each base:
+// - A/T complement across left/right edges (A has RIGHT tab, T has LEFT slot)
+// - C/G complement across top/bottom edges (C has TOP tab, G has BOTTOM slot)
 const BaseSVG = ({ base, size = 48 }) => {
-  // A/T pair: left tab, right slot; T: left slot, right tab
-  // C/G pair: top tab, bottom slot; G: top slot, bottom tab
-  switch (base) {
-    case 'A':
-      return (
-        <svg width={size} height={size} viewBox="0 0 48 48">
-          <path d="M0,8 Q0,0 8,0 H40 Q48,0 48,8 V40 Q48,48 40,48 H8 Q0,48 0,40 V32 Q8,32 8,24 Q8,16 0,16 Z" fill="#FFB347" stroke="#d89b2d" strokeWidth="2"/>
-          <text x="50%" y="60%" textAnchor="middle" fontSize="22" fontWeight="bold" fill="#fff" dy="-2">A</text>
-        </svg>
-      );
-    case 'T':
-      return (
-        <svg width={size} height={size} viewBox="0 0 48 48">
-          <path d="M0,8 Q0,0 8,0 H40 Q48,0 48,8 V16 Q40,16 40,24 Q40,32 48,32 V40 Q48,48 40,48 H8 Q0,48 0,40 Z" fill="#B0E0E6" stroke="#6bb3bb" strokeWidth="2"/>
-          <text x="50%" y="60%" textAnchor="middle" fontSize="22" fontWeight="bold" fill="#fff" dy="-2">T</text>
-        </svg>
-      );
-    case 'C':
-      return (
-        <svg width={size} height={size} viewBox="0 0 48 48">
-          <path d="M8,0 Q0,0 0,8 V40 Q0,48 8,48 H40 Q48,48 48,40 V32 Q32,32 32,40 Q32,48 24,48 Q16,48 16,40 Q16,32 0,32 V16 Q16,16 16,8 Q16,0 24,0 Q32,0 32,8 Q32,16 48,16 V8 Q48,0 40,0 Z" fill="#90EE90" stroke="#4bb34b" strokeWidth="2"/>
-          <text x="50%" y="60%" textAnchor="middle" fontSize="22" fontWeight="bold" fill="#fff" dy="-2">C</text>
-        </svg>
-      );
-    case 'G':
-      return (
-        <svg width={size} height={size} viewBox="0 0 48 48">
-          <path d="M8,0 Q0,0 0,8 V16 Q16,16 16,8 Q16,0 24,0 Q32,0 32,8 Q32,16 48,16 V40 Q48,48 40,48 H8 Q0,48 0,40 V32 Q16,32 16,40 Q16,48 24,48 Q32,48 32,40 Q32,32 48,32 V8 Q48,0 40,0 Z" fill="#FF6961" stroke="#d13b3b" strokeWidth="2"/>
-          <text x="50%" y="60%" textAnchor="middle" fontSize="22" fontWeight="bold" fill="#fff" dy="-2">G</text>
-        </svg>
-      );
-    default:
-      return null;
-  }
+  const id = useId().replace(/:/g, '');
+  const fillMap = { A: '#FFB347', T: '#B0E0E6', C: '#90EE90', G: '#FF6961' };
+  const strokeMap = { A: '#d89b2d', T: '#6bb3bb', C: '#4bb34b', G: '#d13b3b' };
+  const fill = fillMap[base] || '#ddd';
+  const stroke = strokeMap[base] || '#999';
+
+  const vb = 48; // viewBox size
+  const P = 6;   // padding from edges for base rect
+  const R = 8;   // rect corner radius
+  const RT = 6;  // tab/slot radius
+
+  const RightTab = () => (
+    <g>
+      <rect x={P} y={P} width={vb - 2 * P} height={vb - 2 * P} rx={R} fill={fill} stroke={stroke} strokeWidth={2} />
+      <circle cx={vb - P} cy={vb / 2} r={RT} fill={fill} stroke={stroke} strokeWidth={2} />
+    </g>
+  );
+  const RightSlot = () => (
+    <g>
+      <defs>
+        <mask id={`mask-right-${id}`}>
+          <rect x="0" y="0" width={vb} height={vb} fill="white" />
+          <circle cx={vb - P} cy={vb / 2} r={RT} fill="black" />
+        </mask>
+      </defs>
+      <rect x={P} y={P} width={vb - 2 * P} height={vb - 2 * P} rx={R} fill={fill} stroke={stroke} strokeWidth={2} mask={`url(#mask-right-${id})`} />
+    </g>
+  );
+  const LeftSlot = () => (
+    <g>
+      <defs>
+        <mask id={`mask-left-${id}`}>
+          <rect x="0" y="0" width={vb} height={vb} fill="white" />
+          <circle cx={P} cy={vb / 2} r={RT} fill="black" />
+        </mask>
+      </defs>
+      <rect x={P} y={P} width={vb - 2 * P} height={vb - 2 * P} rx={R} fill={fill} stroke={stroke} strokeWidth={2} mask={`url(#mask-left-${id})`} />
+    </g>
+  );
+  const TopTab = () => (
+    <g>
+      <rect x={P} y={P} width={vb - 2 * P} height={vb - 2 * P} rx={R} fill={fill} stroke={stroke} strokeWidth={2} />
+      <circle cx={vb / 2} cy={P} r={RT} fill={fill} stroke={stroke} strokeWidth={2} />
+    </g>
+  );
+  const TopSlot = () => (
+    <g>
+      <defs>
+        <mask id={`mask-top-${id}`}>
+          <rect x="0" y="0" width={vb} height={vb} fill="white" />
+          <circle cx={vb / 2} cy={P} r={RT} fill="black" />
+        </mask>
+      </defs>
+      <rect x={P} y={P} width={vb - 2 * P} height={vb - 2 * P} rx={R} fill={fill} stroke={stroke} strokeWidth={2} mask={`url(#mask-top-${id})`} />
+    </g>
+  );
+  const BottomSlot = () => (
+    <g>
+      <defs>
+        <mask id={`mask-bottom-${id}`}>
+          <rect x="0" y="0" width={vb} height={vb} fill="white" />
+          <circle cx={vb / 2} cy={vb - P} r={RT} fill="black" />
+        </mask>
+      </defs>
+      <rect x={P} y={P} width={vb - 2 * P} height={vb - 2 * P} rx={R} fill={fill} stroke={stroke} strokeWidth={2} mask={`url(#mask-bottom-${id})`} />
+    </g>
+  );
+
+  const Letter = () => (
+    <text x="50%" y="58%" textAnchor="middle" fontSize="22" fontWeight="bold" fill="#ffffff">{base}</text>
+  );
+
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48">
+      {base === 'A' && <RightTab />}
+      {base === 'T' && <LeftSlot />}
+      {base === 'C' && <TopTab />}
+      {base === 'G' && <BottomSlot />}
+      <Letter />
+    </svg>
+  );
 };
 
 const BASES = [
@@ -92,6 +141,53 @@ function App() {
     const onUp = () => {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
+      // After releasing, attempt snapping to complementary neighbor
+      setPlacedBases((prev) => {
+        const cur = prev[idx];
+        if (!cur) return prev;
+
+        // Find best complementary candidate
+        const compMap = { A: 'T', T: 'A', C: 'G', G: 'C' };
+        const need = compMap[cur.type];
+        let best = { i: -1, dist: Infinity };
+        prev.forEach((b, i) => {
+          if (i === idx) return;
+          if (b.type !== need) return;
+          const dx = b.x - cur.x;
+          const dy = b.y - cur.y;
+          const d = Math.hypot(dx, dy);
+          if (d < best.dist) best = { i, dist: d };
+        });
+        if (best.i === -1 || best.dist > 40) return prev; // proximity threshold
+
+        const target = prev[best.i];
+        // Desired alignment depends on pair
+        const snap = (arr, i, val) => arr.map((x, k) => (k === i ? val : x));
+        const centerOffset = 24; // rotate around center in our math
+        let snapped = prev;
+
+        if ((cur.type === 'A' && target.type === 'T') || (cur.type === 'T' && target.type === 'A')) {
+          // Align horizontally: centers aligned on y, x offset such that A's right tab meets T's left slot
+          // We snap cur onto target's left side regardless of which is which, using a small gap ~0
+          const desiredRot = 0; // prefer upright
+          if (Math.abs((cur.rotation % 360)) < 20 && Math.abs((target.rotation % 360)) < 20) {
+            const gap = 0; // visual contact
+            const x = target.x - (cur.type === 'A' ? (48 - 6) + gap : -(48 - 6) - gap);
+            const y = target.y; // align centers
+            snapped = snap(snapped, idx, { ...cur, x, y, rotation: 0 });
+          }
+        } else if ((cur.type === 'C' && target.type === 'G') || (cur.type === 'G' && target.type === 'C')) {
+          // Align vertically: centers aligned on x, y offset such that C's top tab meets G's bottom slot
+          if (Math.abs((cur.rotation % 360)) < 20 && Math.abs((target.rotation % 360)) < 20) {
+            const gap = 0;
+            const x = target.x; // align centers
+            const y = target.y + (cur.type === 'C' ? (48 - 6) + gap : -(48 - 6) - gap);
+            snapped = snap(snapped, idx, { ...cur, x, y, rotation: 0 });
+          }
+        }
+
+        return snapped;
+      });
     };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
